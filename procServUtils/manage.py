@@ -291,8 +291,8 @@ def writeprocs(conf, args):
             # Delete any existing tcp_port dict entry
             if 'tcp_port' in opts.keys():
                 del opts['tcp_port']
-            _log.debug('port_string =  %s', port_string)
             port_string = conf.get(name, 'port')
+            _log.debug('port_string =  %s', port_string)
             if 'tcp:' in port_string:
                 opts['tcp_port'] = port_string.split(':')[1]
             if port_string.isdigit():
