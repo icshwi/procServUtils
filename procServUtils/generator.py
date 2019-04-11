@@ -59,8 +59,9 @@ ExecStart=/usr/bin/procServ \\
 """.format(**opts))
 
     F.write("""                    {command}
-                    
 SyslogIdentifier=ioc@{name}
+RuntimeDirectory=ioc@{name}
+RuntimeDirectoryMode=0755
 """.format(**opts))
 
     if not user:
