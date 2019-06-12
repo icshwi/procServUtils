@@ -8,6 +8,7 @@ import subprocess as SP
 
 from .conf import getconf, getrundir, getgendir
 from .generator import run as genrun
+from .generator import clean as genclean
 
 from pkg_resources import resource_filename
 
@@ -201,7 +202,7 @@ chdir = %(chdir)s
     # Check if should to re-write systemd service files
     if args.writesysd:
         _log.info('Trying to update systemd service files...')
-        genrun(outdir=args.outsysd, user=args.user)
+        genrun(outdir=args.outsysd, user=args.user, name=args.name)
 
     # Daemon reloading
     _log.info('Trigger systemd reload')
@@ -266,10 +267,10 @@ def delproc(conf, args):
         args.out = conserver_conf
         writeprocs(conf, args)
 
-    # Check if should to re-write systemd service files
+    # Check if should update (in this case remove) systemd service files
     if args.writesysd:
         _log.info('Trying to update systemd service files...')
-        genrun(outdir=args.outsysd, user=args.user)
+        genclean(outdir=args.outsysd, name=args.name)
 
     # Daemon reloading
     _log.info('Trigger systemd reload')
