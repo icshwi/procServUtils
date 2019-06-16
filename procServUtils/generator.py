@@ -2,6 +2,9 @@
 import sys, os, errno, glob
 from .conf import getconf
 
+import logging
+_log = logging.getLogger(__name__)
+
 def write_service(F, conf, sect, user=False):
     opts = {
         'name':sect,
@@ -75,7 +78,7 @@ Group={group}
 WantedBy=multi-user.target
 """)
 
-def run(outdir, user=False):
+def run(outdir, user=False, name='*'):
     conf = getconf(user=user)
     service_name_template = 'ioc@%s.service'
 
@@ -88,26 +91,35 @@ def run(outdir, user=False):
             raise
 
     # Cleanup of the *.service files at first
-    serviceFilesList = glob.glob(os.path.join(outdir, service_name_template % '*'), recursive=True)
-    for serviceFile in serviceFilesList:
-        try:
-            os.remove(serviceFile)
-        except:
-            _log.debug("Error while trying to delete a service file: %s" % serviceFile)
+    clean(outdir, name)
 
     # Create new service files according to configured procedures
     for sect in conf.sections():
         if not conf.getboolean(sect, 'instance'):
             continue
-        service = service_name_template % sect
-        ofile = os.path.join(outdir, service)
-        with open(ofile+'.tmp', 'w') as F:
-            write_service(F, conf, sect, user=user)
+        if sect == name or name == '*':
+            service = service_name_template % sect
+            _log.info("Creating... %s" % str(service))
+            ofile = os.path.join(outdir, service)
+            with open(ofile+'.tmp', 'w') as F:
+                write_service(F, conf, sect, user=user)
 
-        os.rename(ofile+'.tmp', ofile)
-        
+            os.rename(ofile+'.tmp', ofile)
+
+            try:
+                os.symlink(ofile,
+                        os.path.join(wantsdir, service))
+            except FileExistsError:
+                continue
+
+def clean(outdir, name='*'):
+    service_name_template = 'ioc@%s.service'
+
+    # Cleanup of the *.service files which match informed name
+    serviceFilesList = glob.glob(os.path.join(outdir, service_name_template % name), recursive=True)
+    for serviceFile in serviceFilesList:
         try:
-            os.symlink(ofile,
-                    os.path.join(wantsdir, service))
-        except FileExistsError:
-            continue
+            _log.info("Removing... %s" % str(serviceFile))
+            os.remove(serviceFile)
+        except:
+            _log.debug("Error while trying to delete a service file: %s" % serviceFile)
